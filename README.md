@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-    <img src="https://github.com/KabelitzC/enhanced-comments/blob/main/images/icon.large.png?raw=true" alt="logo" width="256">
+    <img src="https://github.com/KabelitzC/enhanced-comments/blob/main/images/logo.large.png?raw=true" alt="logo" width="256">
   <br>
   Enhanced Comments
   <br>
