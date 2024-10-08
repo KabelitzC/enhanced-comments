@@ -1,0 +1,87 @@
+{
+  "name": "enhanced-comments",
+  "displayName": "Enhanced Comments",
+  "description": "Single line block comments in VS Code (for HTML, XML and Markdown)",
+  "icon": "images/logo.png",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "galleryBanner": {
+      "color": "#1f1f1f",
+      "theme": "dark"
+  },
+  "publisher": "KabelitzC",
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "comment",
+    "html",
+    "xml",
+    "markdown"
+  ],
+  "pricing": "Free",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KabelitzC/enhanced-comments.git"
+  },
+  "homepage": "https://github.com/KabelitzC/enhanced-comments",
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "enhancedComments.addComment",
+        "title": "Enhanced Comments: Add Comment"
+      },
+      {
+        "command": "enhancedComments.removeComment",
+        "title": "Enhanced Comments: Remove Comment"
+      },
+      {
+        "command": "enhancedComments.toggleComment",
+        "title": "Enhanced Comments: Toggle Comment"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "enhancedComments.addComment",
+        "key": "ctrl+k ctrl+c",
+        "mac": "cmd+k cmd+c",
+        "when": "editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "enhancedComments.removeComment",
+        "key": "ctrl+k ctrl+u",
+        "mac": "cmd+k cmd+u",
+        "when": "editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "enhancedComments.toggleComment",
+        "key": "ctrl+/",
+        "mac": "ctrl+/",
+        "when": "editorTextFocus && !editorReadonly"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/mocha": "^10.0.7",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.3.0",
+    "@typescript-eslint/parser": "^8.3.0",
+    "eslint": "^9.9.1",
+    "typescript": "^5.5.4",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  }
+}
