@@ -7,9 +7,9 @@
 </h1>
 
 This extension enhances the comment functionality of VS Code for HTML, XML and Markdown files. 
-* Call the "addComment" command on multiple lines and each line will get its own block comment.
+* Call the "Add Comment" command on multiple lines and each line will get its own block comment.
 * If you add a comment to a line which already has a comment, the opening and closing block will be replaced.
-* The "toggleComment" command checks if all selected lines are comments and then adds or removes block comments.
+* The "Toggle Comment" command checks if all selected lines are comments and then adds or removes block comments.
 * For all other file types the corresponding built-in commands are invoked.
 
 ![Demo](images/demo.gif)
