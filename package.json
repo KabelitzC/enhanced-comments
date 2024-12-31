@@ -3,7 +3,7 @@
   "displayName": "Enhanced Comments",
   "description": "Single line block comments in VS Code (for HTML, XML and Markdown)",
   "icon": "images/logo.png",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -63,7 +63,23 @@
         "mac": "ctrl+/",
         "when": "editorTextFocus && !editorReadonly"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Enhanced Comments",
+      "properties": {
+        "enhancedComments.indentationMode": {
+          "type": "string",
+          "enum": ["individual", "global", "add indent of first line"],
+          "markdownEnumDescriptions": [
+            "The comment starts at the position where the first non-whitespace charakter is. This is computed for each line individually.",
+            "The comment starts for each line at the position where the first non-whitespace charakter of the first marked line is.",
+            "The comment starts for each line at the position where the first non-whitespace charakter of the first marked line is. Additionally the indent of the first line is added to every line."
+          ],
+          "default": "individual",
+          "markdownDescription": "Specifies the indentation mode. See the [Readme](https://github.com/KabelitzC/enhanced-comments?tab=readme-ov-file#indentation-mode)."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

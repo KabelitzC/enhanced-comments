@@ -1,4 +1,9 @@
 import * as vscode from 'vscode';
+import { IndiviualCommenter } from './commenter/individualCommenter';
+import { Commenter, CommentPostion } from './commenter/commenter';
+import { GlobalCommenter } from './commenter/globalCommenter';
+import { AddIndentOfFirstLineCommenter } from './commenter/addIndentOfFirstLineCommenter';
+
 
 const consideredLanguageIds = ['html', 'xml', 'xsl', 'markdown'];
 
@@ -58,24 +63,30 @@ async function toggleComment(editor: vscode.TextEditor) {
 	}
 }
 
+function getCommenter(): Commenter {
+	const configuredView = vscode.workspace.getConfiguration().get('enhancedComments.indentationMode');
+	switch (configuredView) {
+		case 'individul':
+			return new IndiviualCommenter();
+		case 'global':
+			return new GlobalCommenter();
+		case 'add indent of first line':
+			return new AddIndentOfFirstLineCommenter();
+		default:
+			return new IndiviualCommenter();
+	}
+}
+
 async function addComment(editor: vscode.TextEditor) {
 	const origSelection = editor.selection;
-	const insertedPositions = new Map<number, number>();
 
-	await editor.edit(editBuilder => {
-		for (let i = editor.selection.start.line; i <= editor.selection.end.line; i++) {
-			const currentLine = editor.document.lineAt(i);
-			const firstNonWhitespaceChar = currentLine.text.match(/[^ ]/);
-			if (firstNonWhitespaceChar === null || firstNonWhitespaceChar.index === undefined) {
-				continue;
-			}
-			insertedPositions.set(i, firstNonWhitespaceChar.index);
-
-			const before = currentLine.text.substring(0, firstNonWhitespaceChar.index);
-			const after = currentLine.text.substring(firstNonWhitespaceChar.index).replaceAll(commentOpen, commentOpenReplacement).replaceAll(commentClose, commentCloseReplacement);
-			editBuilder.replace(currentLine.range, before + commentOpen + ' ' + after + ' ' + commentClose);
-		}
-	});
+	const insertedPositions = await getCommenter().addComment(
+		editor,
+		commentOpen,
+		commentOpenReplacement,
+		commentClose,
+		commentCloseReplacement
+	);
 
 	editor.selection = new vscode.Selection(
 		origSelection.anchor.line,
@@ -85,10 +96,10 @@ async function addComment(editor: vscode.TextEditor) {
 	);
 }
 
-function getNewPositionForAdd(pos: vscode.Position, insertedPositions: Map<number, number>): number {
+function getNewPositionForAdd(pos: vscode.Position, insertedPositions: Map<number, CommentPostion>): number {
 	let commentPosition = insertedPositions.get(pos.line);
-	if (commentPosition !== undefined && pos.character >= commentPosition) {
-		return pos.character + commentOpen.length + 1;
+	if (commentPosition !== undefined && pos.character >= commentPosition.open.start) {
+		return pos.character + commentPosition.open.width;
 	}
 	else {
 		return pos.character;
@@ -97,50 +108,14 @@ function getNewPositionForAdd(pos: vscode.Position, insertedPositions: Map<numbe
 
 async function removeComment(editor: vscode.TextEditor) {
 	const origSelection = editor.selection;
-	const removedPositions = new Map<number, { open: { start: number, width: number }, close: { start: number, width: number } }>();
 
-	await editor.edit(editBuilder => {
-		for (let i = editor.selection.start.line; i <= editor.selection.end.line; i++) {
-			const currentLine = editor.document.lineAt(i);
-			let text = currentLine.text;
-
-			if (text.match(/^ *$/) !== null) {
-				continue;
-			}
-
-			const openStart = text.indexOf(commentOpen);
-			const hasOpen = openStart >= 0;
-			const closeStart = text.lastIndexOf(commentClose);
-			const hasClose = closeStart >= 0;
-			if (hasOpen && hasClose && openStart > closeStart) {
-				continue;
-			}
-			const openHasWhitespace = hasOpen && text.indexOf(commentOpen + ' ') === openStart;
-			const closeHasWhitespace = hasClose && text.lastIndexOf(' ' + commentClose) === closeStart - 1;
-
-			removedPositions.set(i, {
-				open: {
-					start: hasOpen ? openStart : 0,
-					width: hasOpen ? (commentOpen.length + (openHasWhitespace ? 1 : 0)) : 0
-				},
-				close: {
-					start: hasClose ? closeStart - (closeHasWhitespace ? 1 : 0) : text.length,
-					width: hasClose ? commentClose.length + (closeHasWhitespace ? 1 : 0) : 0
-				}
-			});
-
-			if (hasOpen) {
-				text = text.replace(commentOpen + (openHasWhitespace ? " " : ""), "");
-				text = text.replace(commentOpenReplacement, commentOpen);
-			};
-			if (hasClose) {
-				text = replaceLast(text, (closeHasWhitespace ? " " : "") + commentClose, "");
-				text = replaceLast(text, commentCloseReplacement, commentClose);
-			}
-
-			editBuilder.replace(currentLine.range, text);
-		}
-	});
+	const removedPositions = await getCommenter().removeComment(
+		editor,
+		commentOpen,
+		commentOpenReplacement,
+		commentClose,
+		commentCloseReplacement
+	);
 
 	editor.selection = new vscode.Selection(
 		origSelection.anchor.line,
@@ -150,7 +125,7 @@ async function removeComment(editor: vscode.TextEditor) {
 	);
 }
 
-function getNewPositionForRemove(pos: vscode.Position, removedPositions: Map<number, { open: { start: number, width: number }, close: { start: number, width: number } }>): number {
+function getNewPositionForRemove(pos: vscode.Position, removedPositions: Map<number, CommentPostion>): number {
 	let commentPosition = removedPositions.get(pos.line);
 	if (commentPosition !== undefined) {
 		if (pos.character < commentPosition.open.start) {
@@ -172,22 +147,12 @@ function getNewPositionForRemove(pos: vscode.Position, removedPositions: Map<num
 	}
 }
 
-function replaceLast(str: string, searchFor: string, replaceWith: string): string {
-	const pos = str.lastIndexOf(searchFor);
-	if (pos < 0) {
-		return str;
-	}
-	const before = str.substring(0, pos);
-	const after = str.substring(pos + (searchFor.length));
-	return (before + replaceWith + after);
-}
-
 function IsEveryLineAComment(editor: vscode.TextEditor): boolean {
 	for (let i = editor.selection.start.line; i <= editor.selection.end.line; i++) {
 		const currentLine = editor.document.lineAt(i);
 		let text = currentLine.text;
 
-		if (text.match(/[^ ]/) === null) {
+		if (text.match(/\S/) === null) {
 			continue;
 		}
 		const openStart = text.indexOf(commentOpen);
